@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# Создаем драйвер
+# создаем драйвер
 driver = webdriver.Chrome()
 driver.get("https://www.rabota.ru/v3_searchResumeByParamsResults.html")
 
@@ -20,6 +20,14 @@ driver.refresh()
 with open("cookies.pkl", "wb") as file:
     pickle.dump(driver.get_cookies(), file)
 
+# ожидание резюме
+WebDriverWait(driver, 20).until(
+    EC.element_to_be_clickable((By.CSS_SELECTOR, "div.b-center__box.resum_rez_item.resum_rez_active"))
+).click()
+
+# парсер
+
+
 # # логин
 # WebDriverWait(driver, 10).until(
 #     EC.presence_of_element_located((By.NAME, "login"))
@@ -31,10 +39,5 @@ with open("cookies.pkl", "wb") as file:
 #     EC.presence_of_element_located((By.NAME, "password"))
 # ).send_keys("m5kGdQwl")
 # driver.find_element(By.CSS_SELECTOR, "button[aria-label='Продолжить']").click()
-
-# переходимация
-WebDriverWait(driver, 20).until(
-    EC.element_to_be_clickable((By.CSS_SELECTOR, "a[aria-label='Поиск резюме']"))
-).click()
 
 time.sleep(10000)
