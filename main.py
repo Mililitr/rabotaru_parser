@@ -7,6 +7,11 @@ from selenium.webdriver.support import expected_conditions as EC
 
 # создаем драйвер
 driver = webdriver.Chrome()
+
+options = webdriver.ChromeOptions()
+options.add_argument('--no-sandbox')
+driver = webdriver.Chrome(options=options)
+
 driver.get("https://www.rabota.ru/v3_searchResumeByParamsResults.html")
 
 # загрузка куки
@@ -20,9 +25,7 @@ driver.refresh()
 with open("cookies.pkl", "wb") as file:
     pickle.dump(driver.get_cookies(), file)
 
-
-
-# парсер
+# область
 driver.get("https://adygeya.rabota.ru/v3_searchResumeByParamsResults.html")
 
 #возраст
@@ -39,25 +42,52 @@ WebDriverWait(driver, 20).until(
     EC.element_to_be_clickable((By.CSS_SELECTOR, "input.blue_btn.expanded-search-btn"))
 ).click()
 
-#резюме
-WebDriverWait(driver, 20).until(
-    EC.element_to_be_clickable((By.CSS_SELECTOR, "div.b-center__box.resum_rez_item.resum_rez_active"))
-).click()
-WebDriverWait(driver, 20).until(
-    EC.element_to_be_clickable((By.CSS_SELECTOR, "a.button_show_contacts.blue_btn.blue_btn_res-card.mt_10"))
-).click()
-WebDriverWait(driver, 10).until(EC.alert_is_present()).accept()
+visited_class = "box-wrapper__resume-name_visited"
+while True:
+    # Получаем все элементы
+    all_items = WebDriverWait(driver, 10).until(
+        EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.resum_rez_item"))
+    )
 
-# контакты
-candidate_name = WebDriverWait(driver, 10).until(
-    EC.presence_of_element_located((By.CSS_SELECTOR, "p.candidate-name"))
-).text
-contact_info = WebDriverWait(driver, 10).until(
-    EC.presence_of_element_located((By.CSS_SELECTOR, "div.t_14.mt_15.email-phone.js-resume-contacts"))
-).text
+    # Проверяем, есть ли элементы без класса visited_class
+    unvisited_items = [item for item in all_items if visited_class not in item.get_attribute("class")]
 
-print("Candidate Name:", candidate_name)
-print("Contact Info:", contact_info)
+    if not unvisited_items:
+        # Если все элементы посещены, скроллим вниз до последнего элемента
+        driver.execute_script("arguments[0].scrollIntoView();", all_items[-1])
+        time.sleep(2)  # Небольшая задержка для загрузки новых элементов
+    else:
+        # Обрабатываем только непосещенные элементы
+        for item in unvisited_items:
+            driver.execute_script("arguments[0].scrollIntoView();", item)
+            driver.execute_script("arguments[0].click();", item)
+            
+            try:
+                WebDriverWait(driver, 4).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "a.button_show_contacts.blue_btn.blue_btn_res-card.mt_10"))
+                ).click()
+                WebDriverWait(driver, 4).until(EC.alert_is_present()).accept()
+            except: pass
+
+            try:
+                candidate_name = WebDriverWait(driver, 4).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "p.candidate-name"))
+                ).text
+                try:
+                    WebDriverWait(driver, 4).until(
+                        EC.element_to_be_clickable((By.CSS_SELECTOR, "span.js-xxx-phone.fw-normal"))
+                    ).click()
+                except: pass
+                contact_info = WebDriverWait(driver, 4).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "div.t_14.mt_15.email-phone.js-resume-contacts"))
+                ).text
+
+                print("Candidate Name:", candidate_name)
+                print("Contact Info:", contact_info)
+            except: pass
+
+        # После обработки непосещенных элементов выходим из цикла
+        break
 
 # # логин
 # WebDriverWait(driver, 10).until(
@@ -70,5 +100,3 @@ print("Contact Info:", contact_info)
 #     EC.presence_of_element_located((By.NAME, "password"))
 # ).send_keys("m5kGdQwl")
 # driver.find_element(By.CSS_SELECTOR, "button[aria-label='Продолжить']").click()
-
-time.sleep(10000)
