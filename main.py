@@ -42,10 +42,10 @@ WebDriverWait(driver, 20).until(
     EC.element_to_be_clickable((By.CSS_SELECTOR, "input.blue_btn.expanded-search-btn"))
 ).click()
 
-visited = 0
+index = 1
 while True:
     WebDriverWait(driver, 4).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, f"div.resum_rez_item[data-position='{visited}']"))
+            EC.element_to_be_clickable((By.CSS_SELECTOR, f"div.resum_rez_item[data-position='{index}']"))
     ).click()
 
     try:
@@ -72,10 +72,10 @@ while True:
     except: 
         pass
 
-    visited += 1
+    index += 1
     print("Candidate Name:", candidate_name)
     print("Contact Info:", contact_info)
-    if visited == 100:
+    if index == 100:
         break
 
 # # логин
