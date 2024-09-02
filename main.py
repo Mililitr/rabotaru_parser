@@ -44,31 +44,37 @@ WebDriverWait(driver, 20).until(
 
 index = 1
 while True:
-    WebDriverWait(driver, 4).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, f"div.resum_rez_item[data-position='{index}']"))
-    ).click()
-
     try:
-        WebDriverWait(driver, 4).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "a.button_show_contacts.blue_btn.blue_btn_res-card.mt_10"))
-        ).click()
-        WebDriverWait(driver, 4).until(EC.alert_is_present()).accept()
-    except: 
-        pass
+        element = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, f"div.resum_rez_item[data-position='{index}']"))
+        )
+        element.click()
 
-    try:
-        candidate_name = WebDriverWait(driver, 4).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "p.candidate-name"))
-        ).text
+        driver.execute_script("arguments[0].scrollIntoView();", element)
+    
         try:
             WebDriverWait(driver, 4).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "span.js-xxx-phone.fw-normal"))
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "a.button_show_contacts.blue_btn.blue_btn_res-card.mt_10"))
             ).click()
+            WebDriverWait(driver, 4).until(EC.alert_is_present()).accept()
         except: 
             pass
-        contact_info = WebDriverWait(driver, 4).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "div.t_14.mt_15.email-phone.js-resume-contacts"))
-        ).text
+
+        try:
+            candidate_name = WebDriverWait(driver, 4).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "p.candidate-name"))
+            ).text
+            try:
+                WebDriverWait(driver, 4).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "span.js-xxx-phone.fw-normal"))
+                ).click()
+            except: 
+                pass
+            contact_info = WebDriverWait(driver, 4).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "div.t_14.mt_15.email-phone.js-resume-contacts"))
+            ).text
+        except: 
+            pass
     except: 
         pass
 
