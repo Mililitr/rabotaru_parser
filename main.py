@@ -1,9 +1,21 @@
 import time
 import pickle
+import signal
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+# Флаг для остановки цикла
+stop_flag = False
+
+def signal_handler(sig, frame):
+    global stop_flag
+    stop_flag = True
+
+# Назначим обработчик сигнала SIGINT (Ctrl+C)
+signal.signal(signal.SIGINT, signal_handler)
 
 # создаем драйвер
 driver = webdriver.Chrome()
@@ -28,7 +40,7 @@ with open("cookies.pkl", "wb") as file:
 # область
 driver.get("https://adygeya.rabota.ru/v3_searchResumeByParamsResults.html")
 
-#возраст
+#возраст и профессии
 WebDriverWait(driver, 20).until(
     EC.element_to_be_clickable((By.CSS_SELECTOR, "a.js-extended-search-link.red_text.t_14"))
 ).click()
@@ -39,14 +51,23 @@ WebDriverWait(driver, 20).until(
     EC.element_to_be_clickable((By.CSS_SELECTOR, "input.js-age-to.b-text-input.b-short-txtinput"))
 ).send_keys("47")
 WebDriverWait(driver, 20).until(
+    EC.element_to_be_clickable((By.CSS_SELECTOR, "input.keywords-input"))
+).send_keys("оператор колл-центра, оператор контакт центра, Оператор входящей связь, диспетчер на телефоне, продавец, администратор, официант, бармен, секретарь, помощник руковдителя")
+WebDriverWait(driver, 20).until(
     EC.element_to_be_clickable((By.CSS_SELECTOR, "input.blue_btn.expanded-search-btn"))
 ).click()
 
 index = 1
+candidate_dict = {}
+candidate_name = None
+contact_info = None
 while True:
+    if stop_flag:
+        break
+
     try:
         element = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, f"div.resum_rez_item[data-position='{index}']"))
+            EC.element_to_be_clickable((By.CSS_SELECTOR, f"div.resum_rez_item[data-position='{index}']"))
         )
         element.click()
 
@@ -73,16 +94,24 @@ while True:
             contact_info = WebDriverWait(driver, 4).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "div.t_14.mt_15.email-phone.js-resume-contacts"))
             ).text
-        except: 
-            pass
-    except: 
-        pass
 
-    index += 1
-    print("Candidate Name:", candidate_name)
-    print("Contact Info:", contact_info)
-    if index == 100:
+            # добавление кандидата в словарь
+            if candidate_name not in candidate_dict:
+                candidate_dict[candidate_name] = contact_info
+                index += 1
+        except: 
+            index += 1
+    except: 
+        index += 1
+    
+    if index == 1000:
         break
+
+# Сохранение данных в Excel
+df = pd.DataFrame(list(candidate_dict.items()), columns=['Candidate Name', 'Contact Info'])
+df.to_excel('candidates.xlsx', index=False)
+
+driver.quit()
 
 # # логин
 # WebDriverWait(driver, 10).until(
